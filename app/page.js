@@ -8,9 +8,14 @@ export default function Home() {
   const [years, setYears] = useState(5);
   const [payout, setPayout] = useState("Quarterly");
 
-  const interest = (deposit * rate * years) / 100;
+  const [calculatedDeposit, setCalculatedDeposit] = useState(100000);
+  const [calculatedRate, setCalculatedRate] = useState(7);
+  const [calculatedYears, setCalculatedYears] = useState(0.25);
 
-  const maturity = deposit + interest;
+  const interest =
+    (calculatedDeposit * calculatedRate * calculatedYears) / 100;
+
+  const maturity = calculatedDeposit + interest;
 
   const formatMoney = (amount) => {
     return new Intl.NumberFormat("en-IN", {
@@ -20,15 +25,49 @@ export default function Home() {
     }).format(amount);
   };
 
+  const handlePayout = (item) => {
+    setPayout(item);
+
+    if (item === "Quarterly") {
+      setYears(0.25);
+    } else if (item === "Half yearly") {
+      setYears(0.5);
+    } else if (item === "Yearly") {
+      setYears(1);
+    } else if (item === "At Maturity") {
+      setYears(5);
+    }
+  };
+
+  const handleCalculate = () => {
+    setCalculatedDeposit(deposit);
+    setCalculatedRate(rate);
+    setCalculatedYears(years);
+  };
+
+  const getTimePeriodText = () => {
+    if (years === 0.25) {
+      return "3 Months";
+    }
+
+    if (years === 0.5) {
+      return "6 Months";
+    }
+
+    if (years === 1) {
+      return "12 Months";
+    }
+
+    return `${years} Years`;
+  };
+
   return (
     <main className="page">
       <div className="calculator">
-
-        {/* LEFT SIDE */}
         <section className="left-panel">
-
           <div className="heading">
             <h1>FD Calculator</h1>
+
             <p>
               Estimates how much your fixed deposit investment will grow over
               time.
@@ -38,6 +77,7 @@ export default function Home() {
           <div className="field">
             <div className="field-header">
               <label>Deposit Amount (₹)</label>
+
               <div className="value-box">
                 {deposit}
               </div>
@@ -49,7 +89,9 @@ export default function Home() {
               max="5000000"
               step="10000"
               value={deposit}
-              onChange={(e) => setDeposit(Number(e.target.value))}
+              onChange={(e) =>
+                setDeposit(Number(e.target.value))
+              }
             />
 
             <div className="range-labels">
@@ -62,18 +104,23 @@ export default function Home() {
           <div className="field">
             <div className="field-header">
               <label>Rate Of Return (%)</label>
+
               <div className="value-box">
                 {rate}
               </div>
             </div>
+
             <input
               type="range"
               min="5"
               max="30"
               step="0.5"
               value={rate}
-              onChange={(e) => setRate(Number(e.target.value))}
+              onChange={(e) =>
+                setRate(Number(e.target.value))
+              }
             />
+
             <div className="range-labels">
               <span>5%</span>
               <span>17.5%</span>
@@ -83,10 +130,12 @@ export default function Home() {
 
           <div className="field payout-field">
             <label>Interest Payout</label>
+
             <small>
               Cumulative Rate Of Return is{" "}
               <b>{rate.toFixed(2)}%</b>
             </small>
+
             <div className="payout-options">
               {[
                 "Quarterly",
@@ -96,52 +145,68 @@ export default function Home() {
               ].map((item) => (
                 <button
                   key={item}
-                  className={payout === item ? "active" : ""}
-                  onClick={() => setPayout(item)}
+                  className={
+                    payout === item ? "active" : ""
+                  }
+                  onClick={() => handlePayout(item)}
                 >
                   {item}
                 </button>
               ))}
             </div>
           </div>
+
           <div className="field">
             <div className="field-header">
-              <label>Time Period (Years)</label>
+              <label>Time Period</label>
+
               <div className="value-box">
-                {years}
+                {getTimePeriodText()}
               </div>
             </div>
+
             <input
               type="range"
               min="1"
               max="50"
+              step="1"
               value={years}
-              onChange={(e) => setYears(Number(e.target.value))}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+
+                setYears(value);
+                setPayout("At Maturity");
+              }}
             />
+
             <div className="range-labels">
-              <span>1</span>
-              <span>25</span>
-              <span>50</span>
+              <span>1 Year</span>
+              <span>25 Years</span>
+              <span>50 Years</span>
             </div>
           </div>
 
-          <button className="calculate">
+          <button
+            className="calculate"
+            onClick={handleCalculate}
+          >
             Calculate
           </button>
         </section>
 
-        {/* RIGHT SIDE */}
         <section className="right-panel">
-
           <div className="summary">
             <div>
               <span>Maturity Amount</span>
+
               <strong>
                 {formatMoney(maturity)}
               </strong>
             </div>
+
             <div>
               <span>Interest Earned</span>
+
               <strong>
                 {formatMoney(interest)}
               </strong>
@@ -154,21 +219,35 @@ export default function Home() {
                 <i className="selected-dot"></i>
                 Selected Year
               </span>
+
               <span>
                 <i className="other-dot"></i>
                 Other Years
               </span>
             </div>
+
             <div className="chart">
               {[1, 2, 3, 4, 5].map((year) => {
                 const yearInterest =
-                  (deposit * rate * year) / 100;
+                  (calculatedDeposit *
+                    calculatedRate *
+                    year) /
+                  100;
+
                 const yearMaturity =
-                  deposit + yearInterest;
+                  calculatedDeposit +
+                  yearInterest;
+
                 const maxMaturity =
-                  deposit + (deposit * rate * 5) / 100;
+                  calculatedDeposit +
+                  (calculatedDeposit *
+                    calculatedRate *
+                    5) /
+                    100;
+
                 const height =
                   (yearMaturity / maxMaturity) * 100;
+
                 return (
                   <div
                     className="bar-container"
@@ -186,18 +265,22 @@ export default function Home() {
                         yearMaturity
                       )}`}
                     ></div>
+
                     <span>{year}</span>
                   </div>
                 );
               })}
             </div>
           </div>
+
           <div className="divider"></div>
+
           <div className="bottom-cards">
             <div className="action-card personalized">
               <div className="badge">
                 Personalised
               </div>
+
               <button className="arrow">
                 {">"}
               </button>
@@ -209,19 +292,23 @@ export default function Home() {
                 <br />
                 Investment
               </h2>
+
               <p>
                 Exclusively For You
               </p>
             </div>
+
             <div className="action-card help">
               <button className="arrow">
                 {">"}
               </button>
+
               <h2>
                 Need Help Finding
                 <br />
                 Right Product?
               </h2>
+
               <p>
                 Get Guidance From Wealth Manager
               </p>
